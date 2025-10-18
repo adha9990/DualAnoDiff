@@ -1,0 +1,6 @@
+.env/
+.idea/
+__pycache__/
+mvtec_anomaly_detection/
+all_generate/
+stable-diffusion-v1-5/
