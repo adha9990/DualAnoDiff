@@ -10,13 +10,13 @@ export MODEL_NAME="/home/bluestar/research/DualAnoDiff/stable-diffusion-v1-5"
 export INSTANCE_DIR="/home/bluestar/research/DualAnoDiff/mvtec_anomaly_detection/{name}/test/{anomaly}"
 export OUTPUT_DIR="all_generate/{name}/{anomaly}"
 
-CUDA_VISIBLE_DEVICES={id} accelerate launch train_dreambooth_lora_single_background.py \
+accelerate launch train_dreambooth_lora_single_background.py \
   --pretrained_model_name_or_path=$MODEL_NAME  \
   --instance_data_dir=$INSTANCE_DIR \
   --output_dir=$OUTPUT_DIR \
   --instance_prompt="a srw" \
   --resolution=512 \
-  --train_batch_size=2 \
+  --train_batch_size=1 \
   --gradient_accumulation_steps=1 \
   --learning_rate=2e-5 \
   --lr_scheduler="constant" \
@@ -24,7 +24,7 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch train_dreambooth_lora_single_backgro
   --max_train_steps=5000 \
   --rank 32 \
   --train_text_encoder
-  
+
 '''
 
 
@@ -36,9 +36,9 @@ sleep 2m
 '''
 
 bash_generate_mask_template='''
-cd /home/bluestar/research/U-2-Net-master
+cd /home/bluestar/research/DualAnoDiff/U-2-Net-master
 
-CUDA_VISIBLE_DEVICES={id} python u2net_test.py /home/bluestar/research/DualAnoDiff/bcm-dual-interrelated_diff/generate_data/{name}/{anomaly}
+CUDA_VISIBLE_DEVICES={id} python u2net_process_mvtec.py /home/bluestar/research/DualAnoDiff/bcm-dual-interrelated_diff/generate_data/{name}/{anomaly}/image /home/bluestar/research/DualAnoDiff/bcm-dual-interrelated_diff/generate_data/{name}/{anomaly}/mask
 sleep 1m
 '''
 
@@ -46,7 +46,7 @@ sleep 1m
 
 
 # ########
-name = 'toothbrush'
+name = 'hazelnut'
 cuda_id = 0
 anomalies = []
 

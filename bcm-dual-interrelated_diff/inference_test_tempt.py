@@ -92,14 +92,12 @@ class RefOnlyNoisedUNet(torch.nn.Module):
         )
 
 
-sys.path.append('/path/to/DualAnoDiff/bcm-dual-interrelated_diff')
+sys.path.append('/home/bluestar/research/DualAnoDiff/bcm-dual-interrelated_diff')
 pipe = DiffusionPipeline.from_pretrained(
-    "/path/to/stable-diffusion-v1-5", safety_checker=None
+    "/home/bluestar/research/DualAnoDiff/stable-diffusion-v1-5", safety_checker=None
 ).to("cuda")
-# vae = AutoencoderKL.from_pretrained("/path/to/stabilityaisd-vae-ft-ema")
-# vae = vae.to("cuda")
-# pipe.vae = vae
-noise_scheduler = DDPMScheduler.from_pretrained("/path/to/stable-diffusion-v1-5", subfolder="scheduler")
+vae = pipe.vae  # Use the VAE from the pipeline
+noise_scheduler = DDPMScheduler.from_pretrained("/home/bluestar/research/DualAnoDiff/stable-diffusion-v1-5", subfolder="scheduler")
 # #############
 args = sys.argv
 device = "cuda"
@@ -107,7 +105,7 @@ mvtec_name = args[1]
 mvtec_aomaly_name = args[2]
 
 # the foreground mask dir which is segment by U2-Net
-condition_dir = ''
+condition_dir = '/home/bluestar/research/DualAnoDiff/bcm-dual-interrelated_diff/foreground_masks'
 # |->condition_dir/
 # |    |->toothbrush/
 # |        |->good/
@@ -145,7 +143,7 @@ j=0
 
 def getcondition(j):
     file_name = con_file_list[j]
-    instance_image = Image.open(os.path.join('/path/to/mvtec',mvtec_name,'train','good',file_name))
+    instance_image = Image.open(os.path.join('/home/bluestar/research/DualAnoDiff/mvtec_anomaly_detection',mvtec_name,'train','good',file_name))
     condition = Image.open(condition_dir+'/'+mvtec_name+'/good/'+file_name)
     condition = condition.convert("L")
     condition = Image.eval(condition, lambda p: 255 - p)

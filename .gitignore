@@ -2,5 +2,10 @@
 .idea/
 __pycache__/
 mvtec_anomaly_detection/
+U-2-Net-master/
 all_generate/
 stable-diffusion-v1-5/
+foreground_masks/
+generate_data/
+*.log
+train_shells/

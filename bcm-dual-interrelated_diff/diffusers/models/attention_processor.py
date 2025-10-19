@@ -1352,7 +1352,6 @@ class LoRAAttnProcessor2_0(nn.Module):
                     encoder_hidden_states=ctx[i]
                 else:
                     encoder_hidden_states=None
-
                 batch_size, sequence_length, _ = (
                     hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
                 )
@@ -1367,24 +1366,30 @@ class LoRAAttnProcessor2_0(nn.Module):
                 if attn.group_norm is not None:
                     hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
 
-                # LoRA query
                 query = attn.to_q(hidden_states) + scale * self.to_q_lora[i](hidden_states)
-
+                
                 # self:
                 if 'condition_encoder_state' in kwargs and i == 0:
                     condition_encoder_state = kwargs['condition_encoder_state']
-                    # Blend condition encoder state with encoder hidden states
-                    condition_encoder_state_processed = self.temporal_condition_mlp(condition_encoder_state)
-                    blended = (1 - self.temporal_a) * encoder_hidden_states + self.temporal_a * condition_encoder_state_processed
-                    encoder_hidden_states_for_kv = blended
-                else:
-                    encoder_hidden_states_for_kv = encoder_hidden_states
+                    condition_encoder_state = self.temporal_condition_mlp(condition_encoder_state)
+                    encoder_hidden_states = (1 - self.temporal_a)* encoder_hidden_states + self.temporal_a * condition_encoder_state
+                    # encoder_hidden_states = self.temporal_condition_n(encoder_hidden_states)
+                    # import ipdb;ipdb.set_trace()
+                    # encoder_hidden_states = self.temporal_condition_n(encoder_hidden_states)
+                    
+                
+                # if encoder_hidden_states is None:
+                    
+                #     if i==0:
+                #         condition_encoder_state = kwargs['condition_encoder_state']
+                #         encoder_hidden_states = hidden_states + condition_encoder_state
+                #     else:
+                #         encoder_hidden_states = hidden_states
+                # elif attn.norm_cross:
+                #     encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
 
-                # LoRA key/value
-                key_input = encoder_hidden_states_for_kv if encoder_hidden_states_for_kv is not None else hidden_states
-                value_input = encoder_hidden_states_for_kv if encoder_hidden_states_for_kv is not None else hidden_states
-                key = attn.to_k(key_input) + scale * self.to_k_lora[i](key_input)
-                value = attn.to_v(value_input) + scale * self.to_v_lora[i](value_input)
+                key = attn.to_k(encoder_hidden_states) + scale * self.to_k_lora[i](encoder_hidden_states)
+                value = attn.to_v(encoder_hidden_states) + scale * self.to_v_lora[i](encoder_hidden_states)
                 
                 head_dim = inner_dim // attn.heads
                 query = query.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
@@ -1422,8 +1427,8 @@ class LoRAAttnProcessor2_0(nn.Module):
                 
             attn_outs = torch.stack(attn_outs, dim=0)
             hidden_states = einops.rearrange(attn_outs, 'f b d c -> (b f) d c', f=self.frames)
-
-            x = hidden_states  # Keep original dtype (fp32 when mixed precision disabled, fp16 when enabled)
+            
+            x = hidden_states
             x = self.temporal_n(x)
             x = self.temporal_i(x)
             d = x.shape[1]
